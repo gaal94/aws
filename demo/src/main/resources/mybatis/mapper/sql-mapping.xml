@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- <mapper namespace="annotation.springmvc.mybatis.MemberMapper"> -->
+<mapper namespace="boardmapper.MemberMapper">
+
+
+<!--  id:같은 매핑 파일 내의 다른 태그의 id 중복불가능
+    id:다른 매핑 파일 내의 다른 태그의 id 중복불가능
+ -->
+<select id="memberList" resultType="memberdto">
+	select * from members
+</select>
+<!-- List<MemberDTO> list = session.selectList() -->
+<select id="oneMember" resultType="memberdto" parameterType="String">
+	select * from members where id=#{id}
+</select>
+<!-- MemberDTO dto = session.selectOne() -->
+
+<select id="memberCount" resultType="int">
+	select count(*) from members
+</select>
+
+<insert id="insertMember" >
+	insert into members values('mybatis111', '홍길동', 11111, '010-9999-8888', 'gildong111@a.com', sysdate)
+</insert>
+
+<insert id="insertMemberDTO" parameterType="memberdto">
+	insert into members values(#{id}, #{name}, #{pw}, #{phone}, #{email}, sysdate)
+</insert>
+
+<update id="updateMember" parameterType="memberdto">
+ update members set pw=#{pw}, phone=#{phone}, email=#{email}  where id=#{id}
+</update>
+
+<delete id="deleteMember" parameterType="String">
+delete from members where id=#{i}
+</delete>
+
+<select id="month" resultType="memberdto" parameterType="String">
+ <!-- select * from members where to_char(regdate, 'mm') = #{month} -->
+ <!-- select * from members where substr(regdate, 4, 2) = #{month} -->
+ 
+ select * from members where instr(regdate, #{month}, 1, 2) = 4 or instr(regdate, #{month})=4 
+ 
+ <!-- select * from members where regdate like concat( concat('___', #{month}) ,  '%' ) -->
+</select>
+
+<!-- paging 조회- 1페이지당 3명씩 조회 -->
+<select id="memberPagingList" resultType="memberdto" parameterType="java.util.ArrayList">
+select id, name, regdate
+from (select rownum r, imsi.*
+     from (select * from members order by regdate desc) imsi
+     )
+where r between
+	<foreach collection="list" item="num" separator="and">#{num}</foreach>   
+</select>
+
+<!-- 
+main - int [] pw = {1111, 2222, 3333, 4444, 5555}
+암호가 pw 배열 중 1개 일치하면 조회
+<select id="" resultType="memberdto" parameterType="int">
+ select * from members where pw in (1111, 2222, 3333, 4444, 5555)
+ select * from members where pw in
+ <foreach collection="array" item="num" separator="," 
+ open="("  close=")" >
+     #{num}
+ </foreach>
+</select>
+ -->
+ 
+ <!-- 		HashMap<String, String> map = new HashMap();
+		map.put("colname", "name");
+		map.put("colvalue", "jdbc%"); -->
+ <select id="memberSearchList" resultType="memberdto" parameterType="hashmap">
+    select * from members where ${colname} like #{colvalue}
+ </select>
+ 
+  <!-- 		MemberDTO dto = new MemberDTO();
+            //dto.setId("testid")
+            id null이 아니면
+            
+   -->
+  <select id="memberSearchList2" resultType="memberdto" parameterType="memberdto">
+    select * from members where
+   <choose>
+   	<when test="id != null">
+   	 	id like concat(concat('%' , #{id}) , '%')
+   	</when>
+   	<when test="name != null">
+   	 	name like concat(concat('%' , #{name}) , '%')
+   	</when>
+   	<when test="email != null">
+   	 	email like concat(concat('%' , #{email}) , '%')
+   	</when>
+   	<when test="phone != null">
+   	 	phone like concat(concat('%' , #{phone}) , '%')
+   	</when>   	
+   </choose>
+   order by regdate desc
+ </select>
+ 
+<!--  select * from members where id='jdbc' and pw=1111
+ update members set email='' where id='jdbc' and pw=1111
+ delete from members where id='jdbc' and pw=1111
+ -->
+ 
+<sql id="wheresql" >
+where id=#{id} and pw=#{pw}
+</sql>
+
+<sql id="updatesql">
+update members set email=''
+</sql>
+
+<sql id="deletesql">
+delete from members
+</sql>
+
+<sql id="selectsql">
+select * from members
+</sql>
+
+<select id="totalsql" resultType="memberdto" parameterType="memberdto">
+ <include refid="selectsql"></include>
+ <include refid="wheresql"></include>
+</select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
